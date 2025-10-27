@@ -15,7 +15,6 @@ import LogoWrapperComponent from "./LogoWrapper";
 import SearchBar from "./SearchBar";
 import LeftIcons from "./LeftIcons";
 import ProfileSection from "./ProfileSection";
-import { SearchIcons } from "../common/SvgIcons";
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -62,7 +61,10 @@ const Header = () => {
   return (
     <Container>
       <Wrapper>
-        <LogoWrapperComponent onClick={() => dispatch(setSidebarBool(!sidebarBool))} userName={userName} />
+        <LogoWrapperComponent
+          onClick={() => dispatch(setSidebarBool(!sidebarBool))}
+          userName={userName}
+        />
 
         {/* ✅ Search visible ONLY once, across all breakpoints */}
         {userName && (
@@ -72,14 +74,19 @@ const Header = () => {
         )}
 
         <RightContainer>
+          {/* ✅ Desktop toggle only (in LeftIcons) */}
           <LeftIcons isDark={isDark} toggleTheme={toggleTheme} />
 
-          {/* ✅ Mobile toggle only */}
+          {/* ✅ Mobile-only theme toggle */}
           <MobileThemeToggle onClick={toggleTheme}>
             {isDark ? "☀️" : "🌙"}
           </MobileThemeToggle>
 
-          <ProfileSection userPhoto={userPhoto} userName={userName} handleAuth={handleAuth} />
+          <ProfileSection
+            userPhoto={userPhoto}
+            userName={userName}
+            handleAuth={handleAuth}
+          />
         </RightContainer>
       </Wrapper>
     </Container>
@@ -118,8 +125,10 @@ const RightContainer = styled.div`
   align-items: center;
 `;
 
+/* ✅ Fix: Hide MobileThemeToggle on Desktop */
 const MobileThemeToggle = styled.div`
-  display: flex;
+  display: none; /* hidden by default */
+
   @media (max-width: 768px) {
     display: inline-flex;
     align-items: center;

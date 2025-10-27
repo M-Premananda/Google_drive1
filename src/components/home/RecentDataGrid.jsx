@@ -32,14 +32,14 @@ const DataGrid = styled.div`
   gap: 12px;
   overflow: hidden;
 
-  /* 🖥 Desktop — use normal grid layout */
+  /* 🖥 Desktop — grid layout */
   @media screen and (min-width: 769px) {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     overflow: visible;
   }
 
-  /* 📱 Mobile — horizontal scroll */
+  /* 📱 Mobile — horizontal scroll, show only two */
   @media screen and (max-width: 768px) {
     display: flex;
     flex-wrap: nowrap;
@@ -47,7 +47,7 @@ const DataGrid = styled.div`
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    gap: 16px;
+    gap: 14px;
     padding: 10px 8px;
     scrollbar-width: none;
     &::-webkit-scrollbar {
@@ -58,16 +58,16 @@ const DataGrid = styled.div`
 
 const DataFile = styled.a`
   text-align: center;
-  border: 1px solid rgb(204 204 204 / 46%);
+  border: 1px solid rgba(204, 204, 204, 0.46);
   border-radius: 10px;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   padding: 12px 0 0 0;
   text-decoration: none;
   transition: transform 0.2s ease, background 0.3s, color 0.3s, border-color 0.3s;
-  flex: 0 0 48%;
+  flex: 0 0 calc(50% - 8px); /* ✅ Show exactly 2 on mobile */
   scroll-snap-align: start;
-  max-width: 250px;
+  max-width: 240px;
 
   &:hover {
     transform: translateY(-4px);
@@ -93,8 +93,8 @@ const DataFile = styled.a`
     transition: background 0.3s, color 0.3s, border-color 0.3s;
   }
 
-  /* 🌙 Dark Mode Support */
-  @media (prefers-color-scheme: dark) {
+  /* 🌙 App-wide Dark Mode (based on .dark-mode class) */
+  body.dark-mode & {
     background: #1f2937;
     border-color: #374151;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
@@ -110,13 +110,12 @@ const DataFile = styled.a`
     }
 
     &:hover {
-      transform: translateY(-4px);
       background: #2d3748;
     }
   }
 
   @media screen and (max-width: 768px) {
-    flex: 0 0 48%;
+    flex: 0 0 calc(50% - 8px); /* Two visible at once */
   }
 
   @media screen and (max-width: 480px) {
