@@ -1,5 +1,5 @@
-// ✅ FINAL LOCKED MAIN DATA — GOOGLE DRIVE STYLE (Fixed scroll + layout isolation)
-import React, { useState, useRef, useEffect } from "react";
+// ✅ FINAL LOCKED MAIN DATA — GOOGLE DRIVE STYLE (220px, fade, arrow, no push layout, meta inside)
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import {
   ArrowDownIcon,
@@ -31,22 +31,24 @@ import { storage } from "../../firebase";
 import { decryptBytes } from "../utils/crypto";
 
 const MainData = ({ files, handleOptionsClick, optionsVisible, handleDelete }) => {
-  const [showShareIcons, setShowShareIcons] = useState(false);
-  const optionsMenuRef = useRef(null);
+  const [showShareIcons, setShowShareIcons] = useState(null);
 
-  // ✅ Close dropdown on outside click
+  // ✅ Close any open dropdown when clicked outside
   useEffect(() => {
     function handleClickOutside(e) {
-      if (optionsMenuRef.current && !optionsMenuRef.current.contains(e.target)) {
+      if (
+        !e.target.closest(".options-menu") &&
+        !e.target.closest(".options-trigger")
+      ) {
         handleOptionsClick(null);
-        setShowShareIcons(false);
+        setShowShareIcons(null);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [handleOptionsClick]);
 
-  // ✅ SECURE DECRYPT & DOWNLOAD
+  // ✅ Secure decrypt + download
   const handleDownloadEncrypted = async (fileDoc) => {
     try {
       const passphrase = prompt("Enter password to decrypt:");
@@ -64,8 +66,6 @@ const MainData = ({ files, handleOptionsClick, optionsVisible, handleDelete }) =
         iv_b64: String(cryptoMeta.iv_b64).trim(),
         salt_b64: String(cryptoMeta.salt_b64).trim(),
       };
-
-      console.log("🔐 DEBUG - Using Crypto Metadata:", normalizedCrypto);
 
       const encryptedRef = ref(storage, fileDoc.data.path);
       const encryptedBytes = await getBytes(encryptedRef);
@@ -89,7 +89,7 @@ const MainData = ({ files, handleOptionsClick, optionsVisible, handleDelete }) =
   };
 
   return (
-    <MainDataWrapper>
+    <div>
       {files.length > 0 && (
         <DataListRow>
           <div><b><ArrowDownIcon /> Name</b></div>
@@ -123,12 +123,18 @@ const MainData = ({ files, handleOptionsClick, optionsVisible, handleDelete }) =
             <div className="modified">{convertDates(file.data.timestamp?.seconds)}</div>
 
             <div style={{ position: "relative" }}>
-              <OptionsTrigger onClick={() => handleOptionsClick(file.id)}>
+              <OptionsTrigger
+                className="options-trigger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOptionsClick(file.id === optionsVisible ? null : file.id);
+                }}
+              >
                 <MoreOptionsIcon />
               </OptionsTrigger>
 
               {optionsVisible === file.id && (
-                <OptionsMenu ref={optionsMenuRef}>
+                <OptionsMenu className="options-menu">
                   {file.data.isEncrypted ? (
                     <MenuItem onClick={() => handleDownloadEncrypted(file)}>
                       <DownloadIcon /> Decrypt & Download
@@ -151,26 +157,18 @@ const MainData = ({ files, handleOptionsClick, optionsVisible, handleDelete }) =
                   <MenuItem
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowShareIcons((prev) => !prev);
+                      setShowShareIcons(showShareIcons === file.id ? null : file.id);
                     }}
                   >
                     <ShareIcon /> Share
                   </MenuItem>
 
-                  {showShareIcons && (
-                    <SharePopover onClick={(e) => e.stopPropagation()}>
-                      <EmailShareButton url={file.data.fileURL}>
-                        <EmailIcon size={32} round />
-                      </EmailShareButton>
-                      <FacebookShareButton url={file.data.fileURL}>
-                        <FacebookIcon size={32} round />
-                      </FacebookShareButton>
-                      <LinkedinShareButton url={file.data.fileURL}>
-                        <LinkedinIcon size={32} round />
-                      </LinkedinShareButton>
-                      <WhatsappShareButton url={file.data.fileURL}>
-                        <WhatsappIcon size={32} round />
-                      </WhatsappShareButton>
+                  {showShareIcons === file.id && (
+                    <SharePopover>
+                      <EmailShareButton url={file.data.fileURL}><EmailIcon size={32} round /></EmailShareButton>
+                      <FacebookShareButton url={file.data.fileURL}><FacebookIcon size={32} round /></FacebookShareButton>
+                      <LinkedinShareButton url={file.data.fileURL}><LinkedinIcon size={32} round /></LinkedinShareButton>
+                      <WhatsappShareButton url={file.data.fileURL}><WhatsappIcon size={32} round /></WhatsappShareButton>
                     </SharePopover>
                   )}
 
@@ -192,125 +190,69 @@ const MainData = ({ files, handleOptionsClick, optionsVisible, handleDelete }) =
           text2={"Use the 'New' button to upload"}
         />
       )}
-    </MainDataWrapper>
+    </div>
   );
 };
 
 export default MainData;
 
-/* ✅ Scroll + Responsive Layout Fix */
-/* ✅ Fixed MainDataWrapper — isolated scroll below Recents */
-const MainDataWrapper = styled.div`
-  width: 100%;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
-  background: var(--bg);
-  padding-bottom: 40px;
-
-  /* ✅ Critical: ensures it scrolls only inside the available viewport area */
-  max-height: calc(100vh - 230px); /* accounts for header + recents + padding */
-  min-height: 200px;
-
-  /* ✅ Smooth mobile scroll */
-  -webkit-overflow-scrolling: touch;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(120, 120, 120, 0.3);
-    border-radius: 3px;
-  }
-
-  @media (max-width: 1024px) {
-    max-height: calc(100vh - 210px);
-  }
-
-  @media (max-width: 768px) {
-    max-height: calc(100vh - 190px);
-    padding-bottom: 60px; /* room for mobile UI bottom */
-  }
-
-  @media (max-width: 480px) {
-    max-height: calc(100vh - 160px);
-  }
-`;
-
-
-/* ✅ Improved DataListRow — fixed stretch + proper wrapping */
+/* ✅ STYLES  */
 const DataListRow = styled.div`
   display: grid;
-  grid-template-columns: 1.8fr 0.8fr 0.7fr 0.4fr;
+  grid-template-columns: 1.5fr 0.8fr 1fr 0.5fr;
+  width: 100%;
+  padding: 10px 16px;
   align-items: center;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
-  box-sizing: border-box;
-  padding: 10px 14px;
-  width: 100%;
-  overflow: hidden;
-  flex-shrink: 0; /* ✅ prevents rows from collapsing or stretching */
-
-  * { min-width: 0; }
-
-  b { font-weight: 600; }
 
   div {
     display: flex;
     align-items: center;
     gap: 8px;
-    overflow: hidden;
   }
 
   .starr {
-    flex-shrink: 0;
     margin-right: 6px;
   }
 
-  a span, span {
+  a span {
     display: inline-block;
+    max-width: 260px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  /* 💻 Tablet */
-  @media screen and (max-width: 1024px) and (min-width: 769px) {
+  @media screen and (max-width: 768px) {
     grid-template-columns: 2fr 1fr 0.8fr;
     .modified { display: none; }
   }
 
-  /* 📱 Mobile */
-  @media screen and (max-width: 768px) {
-    grid-template-columns: 2.2fr 1fr auto;
-    padding: 8px 10px;
-    font-size: 13px;
-    .modified { display: none; }
+  @media screen and (max-width: 480px) {
+    grid-template-columns: 2fr 0.8fr;
+    .fileSize, .modified { display: none; }
   }
 `;
 
-
-// ✅ Bigger 3-dots icon (Google Drive style)
 const OptionsTrigger = styled.span`
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px; /* Expanded hit area */
+  width: 32px;
   height: 32px;
+
   svg {
-    font-size: 28px; /* Increase dot size */
+    font-size: 28px;
     padding: 6px;
     border-radius: 50%;
     transition: background 0.15s ease;
   }
   svg:hover {
-    background: rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.12);
   }
 `;
-
 
 const OptionsMenu = styled.span`
   display: flex;
@@ -426,15 +368,12 @@ const OptionsMenu = styled.span`
   }
 `;
 
-
-
 const MenuItem = styled.div`
   padding: 12px 14px;
   display: flex;
   align-items: center;
   width: 100%;
   gap: 8px;
-  box-sizing: border-box;
   font-size: 15px;
   cursor: pointer;
   svg { font-size: 18px; }
@@ -445,42 +384,8 @@ const MenuItem = styled.div`
 const Meta = styled.div`
   padding: 10px 14px;
   font-size: 13px;
-  opacity: .7;
+  opacity: 0.7;
   pointer-events: none;
-`;
-
-const ShareButton = styled.span`
-  position: relative;
-  cursor: pointer;
-
-  span {
-    width: max-content;
-    height: max-content;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 0;
-    position: absolute;
-    top: -80px;
-    left: -60px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out;
-  }
-
-  .show {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  &:hover {
-    span {
-      background-color: transparent;
-    }
-  }
 `;
 
 const SharePopover = styled.div`
@@ -498,4 +403,3 @@ const SharePopover = styled.div`
   pointer-events: auto;
   z-index: 9999;
 `;
-
