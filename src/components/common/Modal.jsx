@@ -26,7 +26,7 @@ const HelpModal = ({ openHelp, closeHelpModal }) => {
           {/* 👤 Chetan */}
           <ProfileCard>
             <div className="image">
-              <img src="/WhatsApp Image 2025-10-27 at 10.07.24.jpeg" alt="Chetan Gowda" />
+              <img src="\WhatsApp Image 2025-10-27 at 10.06.45.jpeg" alt="Chetan Gowda" />
             </div>
             <h2>Chetan Gowda K</h2>
             <p>Contact Me:</p>
